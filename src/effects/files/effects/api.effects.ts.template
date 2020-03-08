@@ -1,0 +1,38 @@
+import { Injectable } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { Actions, ofType, createEffect } from '@ngrx/effects';
+import { map, exhaustMap } from 'rxjs/operators';
+import { FileReaderService } from 'src/app/core/services';
+import * as fromRoot from 'src/app/core/reducers';
+import { isModuleLoaded } from 'src/app/core/operators';
+import {
+  <%= classify(name) %>PageActions,
+  <%= classify(name) %>ApiActions,
+  <%= classify(name) %>Actions
+} from '../actions';
+import { COMPONENTS, MODULE } from '../consts';
+
+@Injectable()
+export class <%= classify(name) %>ApiEffects {
+  loadComponents$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(<%= classify(name) %>PageActions.enter.type),
+      isModuleLoaded<typeof <%= classify(name) %>PageActions.enter>(this.store, MODULE),
+      exhaustMap(() =>
+        this.fileReader
+          .getComponents(MODULE, COMPONENTS)
+          .pipe(
+            map(components =>
+              <%= classify(name) %>ApiActions.componentsLoaded({ module: MODULE, components })
+            )
+          )
+      )
+    )
+  );
+
+  constructor(
+    private store: Store<fromRoot.State>,
+    private fileReader: FileReaderService,
+    private actions$: Actions<<%= classify(name) %>Actions>
+  ) {}
+}

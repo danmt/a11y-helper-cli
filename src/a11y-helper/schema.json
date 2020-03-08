@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/schema",
+  "id": "A11yHelperSchematics",
+  "title": "A11yHelper Options Schema",
+  "type": "object",
+  "description": "This is a sample for testing",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name for testing",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "What's the name?"
+    }
+  },
+  "required": ["name"]
+}

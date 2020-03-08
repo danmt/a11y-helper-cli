@@ -1,0 +1,42 @@
+{
+  "$schema": "../node_modules/@angular-devkit/schematics/collection-schema.json",
+  "schematics": {
+    "a11y-helper": {
+      "description": "A blank schematic.",
+      "factory": "./a11y-helper/index#a11yHelper",
+      "schema": "./a11y-helper/schema.json"
+    },
+    "effects": {
+      "factory": "./effects",
+      "description": "Create an Angular effects.",
+      "schema": "./effects/schema.json"
+    },
+    "consts": {
+      "factory": "./consts",
+      "description": "Create an Angular consts.",
+      "schema": "./consts/schema.json"
+    },
+    "actions": {
+      "factory": "./actions",
+      "description": "Create an Angular actions.",
+      "schema": "./actions/schema.json"
+    },
+    "container": {
+      "factory": "./container",
+      "description": "Create an Angular container.",
+      "schema": "./container/schema.json"
+    },
+    "component": {
+      "aliases": ["c"],
+      "factory": "./component",
+      "description": "Create an Angular component.",
+      "schema": "./component/schema.json"
+    },
+    "module": {
+      "aliases": ["m"],
+      "factory": "./module",
+      "description": "Create an Angular module.",
+      "schema": "./module/schema.json"
+    }
+  }
+}

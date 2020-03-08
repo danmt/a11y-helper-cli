@@ -1,0 +1,11 @@
+import { createAction, props } from '@ngrx/store';
+
+export const enter = createAction('[<%= classify(name) %> Page] Enter');
+export const toggleComponent = createAction(
+  '[<%= classify(name) %> Page] Toggle Component',
+  props<{ id: string; isOpen: boolean }>()
+);
+
+export type <%= classify(name) %>PageActions = ReturnType<
+  typeof enter | typeof toggleComponent
+>;

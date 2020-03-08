@@ -1,0 +1,1 @@
+export { <%= classify(name) %>ApiEffects } from './api.effects';

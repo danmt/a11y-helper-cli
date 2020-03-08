@@ -1,0 +1,9 @@
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
+@Component({
+  selector: '<%= selector %>',
+  templateUrl: './<%= dasherize(name) %><%= type ? '.' + dasherize(type): '' %>.html',
+  styleUrls: ['./<%= dasherize(name) %><%= type ? '.' + dasherize(type): '' %>.<%= style %>'],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class <%= classify(name) %><%= classify(type) %> {}

@@ -1,0 +1,11 @@
+<app-page-section [title]="module">
+  <app-code
+    *ngFor="let component of components$ | async"
+    [module]="component.module"
+    [component]="component.name"
+    [code]="component.code"
+    [isOpen]="component.isOpen"
+    (codePanelToggled)="toggleComponent(component.id, component.isOpen)"
+  >
+  </app-code>
+</app-page-section>

@@ -1,0 +1,8 @@
+import * as <%= classify(name) %>PageActions from './page.actions';
+import * as <%= classify(name) %>ApiActions from './api.actions';
+
+export type <%= classify(name) %>Actions =
+  | <%= classify(name) %>ApiActions.<%= classify(name) %>ApiActions
+  | <%= classify(name) %>PageActions.<%= classify(name) %>PageActions;
+
+export { <%= classify(name) %>PageActions, <%= classify(name) %>ApiActions };

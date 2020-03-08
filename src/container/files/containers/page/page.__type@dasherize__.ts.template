@@ -1,0 +1,30 @@
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Store } from '@ngrx/store';
+import * as fromRoot from 'src/app/core/reducers';
+import { <%= classify(parent) %>PageActions } from '../../actions';
+import { MODULE } from '../../consts';
+
+@Component({
+  selector: '<%= selector %>',
+  templateUrl: './<%= dasherize(name) %><%= type ? '.' + dasherize(type): '' %>.html',
+  styles: [`
+    :host {
+      display: block;
+    }
+  `],
+  changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class <%= classify(parent) %><%= classify(name) %><%= classify(type) %> implements OnInit {
+  module = MODULE;
+  components$ = this.store.select(fromRoot.selectComponentsByModule, MODULE);
+
+  constructor(private store: Store<fromRoot.State>) {}
+
+  ngOnInit() {
+    this.store.dispatch(<%= classify(parent) %>PageActions.enter());
+  }
+
+  toggleComponent(id: string, isOpen: boolean) {
+    this.store.dispatch(<%= classify(parent) %>PageActions.toggleComponent({ id, isOpen }));
+  }
+}

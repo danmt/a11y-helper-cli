@@ -1,0 +1,9 @@
+import { createAction, props } from '@ngrx/store';
+import { ComponentMetadata } from 'src/app/core/interfaces';
+
+export const componentsLoaded = createAction(
+  '[<%= classify(name) %> API] Components Loaded Success',
+  props<{ module: string; components: ComponentMetadata[] }>()
+);
+
+export type <%= classify(name) %>ApiActions = ReturnType<typeof componentsLoaded>;
