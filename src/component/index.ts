@@ -26,7 +26,7 @@ import {
   addDeclarationToModule,
   addEntryComponentToModule,
   addExportToModule,
-  getDeclaration
+  addToArray
 } from "../utility/ast-utils";
 import { InsertChange } from "../utility/change";
 import {
@@ -149,7 +149,7 @@ function addComponentToModule(path: string, dasherized: string): Rule {
       true
     );
 
-    const addDeclaration = getDeclaration(
+    const changes = addToArray(
       sourceFile,
       path,
       "COMPONENTS",
@@ -157,7 +157,7 @@ function addComponentToModule(path: string, dasherized: string): Rule {
     ) as InsertChange;
 
     const recorder = host.beginUpdate(path);
-    recorder.insertLeft(addDeclaration.pos, addDeclaration.toAdd);
+    recorder.insertLeft(changes.pos, changes.toAdd);
     host.commitUpdate(recorder);
 
     return host;

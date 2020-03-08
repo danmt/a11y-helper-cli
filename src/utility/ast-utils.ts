@@ -897,11 +897,27 @@ export function getDeclarationInStatement(
   });
 }
 
-export function getDeclaration(
+export function getDeclaration(source: ts.SourceFile, declarationName: string) {
+  if (!source.statements.length) {
+    console.log("error");
+    return;
+  }
+
+  let declaration;
+
+  for (let statement of source.statements) {
+    if (ts.isVariableStatement(statement)) {
+      declaration =
+        getDeclarationInStatement(statement, declarationName) || declaration;
+    }
+  }
+
+  return declaration;
+}
+
+export function getFunctionDeclaration(
   source: ts.SourceFile,
-  fileToAdd: string,
-  declarationName: string,
-  content: string
+  declarationName: string
 ) {
   if (!source.statements.length) {
     console.log("error");
@@ -911,25 +927,103 @@ export function getDeclaration(
   let declaration;
 
   for (let statement of source.statements) {
-    declaration = getDeclarationInStatement(
-      statement as ts.VariableStatement,
-      declarationName
-    );
+    if (
+      ts.isFunctionDeclaration(statement) &&
+      statement.name?.getText() === declarationName
+    ) {
+      return statement as ts.FunctionDeclaration;
+    }
   }
 
+  return declaration;
+}
+
+export function addToArray(
+  source: ts.SourceFile,
+  fileToAdd: string,
+  declarationName: string,
+  content: string
+) {
+  const declaration = getDeclaration(source, declarationName);
+
   if (!declaration) {
-    console.log("error");
+    console.log("Declaration not found");
     return;
   }
 
   const arrayLiteral = declaration.initializer as ts.ArrayLiteralExpression;
   const insertPos = arrayLiteral.elements.end;
   let route = "";
-  console.log(arrayLiteral.elements.length);
   if (arrayLiteral.elements.length) {
     route = `,\n${content}`;
   } else {
     route = `${content}`;
   }
   return new InsertChange(fileToAdd, insertPos, route);
+}
+
+export function getReducer(source: ts.SourceFile, name: string) {
+  const declaration = getDeclaration(source, name);
+
+  if (!declaration) {
+    console.log("Declaration not found");
+    return;
+  }
+
+  const callExpression = declaration.initializer as ts.Expression;
+
+  if (!ts.isCallExpression(callExpression)) {
+    console.log("Wrong value for declaration");
+    return;
+  }
+
+  return callExpression;
+}
+
+export function getReducerComponentLoadedCase(
+  source: ts.SourceFile,
+  name: string
+) {
+  const reducerDeclaration = getReducer(source, name);
+  if (!reducerDeclaration) {
+    console.log("Wrong value for declaration");
+    return;
+  }
+  return reducerDeclaration.arguments[1];
+}
+
+export function getReducerToggleComponentCase(
+  source: ts.SourceFile,
+  name: string
+) {
+  const reducerDeclaration = getReducer(source, name);
+  if (!reducerDeclaration) {
+    console.log("Wrong value for declaration");
+    return;
+  }
+  return reducerDeclaration.arguments[2];
+}
+
+export function addNewTypeToReducer(
+  source: ts.SourceFile,
+  path: string,
+  name: string,
+  newType: string
+) {
+  const declaration = getFunctionDeclaration(source, name);
+
+  if (!declaration) {
+    console.log("Declaration not found");
+    return;
+  }
+
+  const unionType = declaration.parameters[1].type;
+
+  if (!unionType || !ts.isUnionTypeNode(unionType)) {
+    console.log("Type error");
+    return;
+  }
+  const insertPos = unionType.types[unionType.types.length - 1].end;
+  const content = `|${newType}`;
+  return new InsertChange(path, insertPos, content);
 }
