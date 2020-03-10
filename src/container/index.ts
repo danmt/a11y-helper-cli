@@ -7,41 +7,28 @@
  */
 import { strings } from "@angular-devkit/core";
 import {
-  FileOperator,
   Rule,
   SchematicsException,
   Tree,
   apply,
   applyTemplates,
   chain,
-  forEach,
   mergeWith,
-  move,
-  noop,
-  url
+  url,
+  move
 } from "@angular-devkit/schematics";
 import * as ts from "typescript";
-import {
-  addDeclarationToModule,
-  addEntryComponentToModule,
-  addExportToModule
-} from "../utility/ast-utils";
+import { addDeclarationToModule } from "../utility/ast-utils";
 import { InsertChange } from "../utility/change";
-import {
-  buildRelativePath,
-  findModuleFromOptions
-} from "../utility/find-module";
-import { parseName } from "../utility/parse-name";
-import { validateHtmlSelector, validateName } from "../utility/validation";
-import { buildDefaultPath, getWorkspace } from "../utility/workspace";
+import { findModuleFromOptions } from "../utility/find-module";
 import { Schema as ComponentOptions } from "./schema";
 
-export enum Style {
-  Css = "css",
-  Less = "less",
-  Sass = "sass",
-  Scss = "scss",
-  Styl = "styl"
+function buildSelector(name: string) {
+  return `app-${name}-page`;
+}
+
+function buildComponentName(name: string) {
+  return strings.classify(name) + "PageComponent";
 }
 
 function readIntoSourceFile(host: Tree, modulePath: string): ts.SourceFile {
@@ -50,7 +37,6 @@ function readIntoSourceFile(host: Tree, modulePath: string): ts.SourceFile {
     throw new SchematicsException(`File ${modulePath} does not exist.`);
   }
   const sourceText = text.toString("utf-8");
-
   return ts.createSourceFile(
     modulePath,
     sourceText,
@@ -61,35 +47,19 @@ function readIntoSourceFile(host: Tree, modulePath: string): ts.SourceFile {
 
 function addDeclarationToNgModule(options: ComponentOptions): Rule {
   return (host: Tree) => {
-    if (options.skipImport || !options.module) {
+    if (!options.module) {
       return host;
     }
-
-    options.type = options.type != null ? options.type : "Component";
-
     const modulePath = options.module;
     const source = readIntoSourceFile(host, modulePath);
-
-    const componentPath =
-      `${options.path}/containers/` +
-      (options.flat ? "" : strings.dasherize(options.name) + "/") +
-      strings.dasherize(options.name) +
-      (options.type ? "." : "") +
-      strings.dasherize(options.type);
-
-    const relativePath = buildRelativePath(modulePath, componentPath);
-    const classifiedName =
-      strings.classify(options.parent) +
-      strings.classify(options.name) +
-      strings.classify(options.type);
-
+    const relativePath = "./containers/page/page.component";
+    const componentName = buildComponentName(options.name);
     const declarationChanges = addDeclarationToModule(
       source,
       modulePath,
-      classifiedName,
+      componentName,
       relativePath
     );
-
     const declarationRecorder = host.beginUpdate(modulePath);
     for (const change of declarationChanges) {
       if (change instanceof InsertChange) {
@@ -98,102 +68,23 @@ function addDeclarationToNgModule(options: ComponentOptions): Rule {
     }
     host.commitUpdate(declarationRecorder);
 
-    if (options.export) {
-      // Need to refresh the AST because we overwrote the file in the host.
-      const source = readIntoSourceFile(host, modulePath);
-
-      const exportRecorder = host.beginUpdate(modulePath);
-      const exportChanges = addExportToModule(
-        source,
-        modulePath,
-        strings.classify(options.name) + strings.classify(options.type),
-        relativePath
-      );
-
-      for (const change of exportChanges) {
-        if (change instanceof InsertChange) {
-          exportRecorder.insertLeft(change.pos, change.toAdd);
-        }
-      }
-      host.commitUpdate(exportRecorder);
-    }
-
-    if (options.entryComponent) {
-      // Need to refresh the AST because we overwrote the file in the host.
-      const source = readIntoSourceFile(host, modulePath);
-
-      const entryComponentRecorder = host.beginUpdate(modulePath);
-      const entryComponentChanges = addEntryComponentToModule(
-        source,
-        modulePath,
-        strings.classify(options.name) + strings.classify(options.type),
-        relativePath
-      );
-
-      for (const change of entryComponentChanges) {
-        if (change instanceof InsertChange) {
-          entryComponentRecorder.insertLeft(change.pos, change.toAdd);
-        }
-      }
-      host.commitUpdate(entryComponentRecorder);
-    }
-
     return host;
   };
 }
 
-function buildSelector(options: ComponentOptions, projectPrefix: string) {
-  const parent = strings.dasherize(options.parent);
-  let selector = strings.dasherize(options.name);
-  if (options.prefix) {
-    selector = `${options.prefix}-${parent}-${selector}`;
-  } else if (options.prefix === undefined && projectPrefix) {
-    selector = `${projectPrefix}-${parent}-${selector}`;
-  }
-
-  return selector;
-}
-
 export default function(options: ComponentOptions): Rule {
   return async (host: Tree) => {
-    const workspace = await getWorkspace(host);
-    const project = workspace.projects.get(options.project as string);
-
-    if (options.path === undefined && project) {
-      options.path = buildDefaultPath(project);
-    }
-
+    const path = options.path + "/" + strings.dasherize(options.name);
     options.module = findModuleFromOptions(host, options);
-
-    const parsedPath = parseName(options.path as string, options.name);
-    options.name = parsedPath.name;
-    options.path = parsedPath.path;
-    options.style = Style.Scss;
-    options.selector =
-      options.selector ||
-      buildSelector(options, (project && project.prefix) || "");
-
-    validateName(options.name);
-    validateHtmlSelector(options.selector);
 
     const templateSource = apply(url("./files"), [
       applyTemplates({
         ...strings,
-        ...options
+        ...options,
+        componentName: buildComponentName(options.name),
+        selector: buildSelector(options.name)
       }),
-      !options.type
-        ? forEach((file => {
-            if (!!file.path.match(new RegExp(".."))) {
-              return {
-                content: file.content,
-                path: file.path.replace("..", ".")
-              };
-            } else {
-              return file;
-            }
-          }) as FileOperator)
-        : noop(),
-      move(parsedPath.path)
+      move(path)
     ]);
 
     return chain([

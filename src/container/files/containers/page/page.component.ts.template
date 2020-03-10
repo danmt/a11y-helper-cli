@@ -6,7 +6,7 @@ import { MODULE } from '../../consts';
 
 @Component({
   selector: '<%= selector %>',
-  templateUrl: './<%= dasherize(name) %><%= type ? '.' + dasherize(type): '' %>.html',
+  templateUrl: './page.component.html',
   styles: [`
     :host {
       display: block;
@@ -14,7 +14,7 @@ import { MODULE } from '../../consts';
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class <%= classify(parent) %><%= classify(name) %><%= classify(type) %> implements OnInit {
+export class <%= componentName %> implements OnInit {
   module = MODULE;
   components$ = this.store.select(fromRoot.selectComponentsByModule, MODULE);
 

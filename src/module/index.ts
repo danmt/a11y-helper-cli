@@ -197,7 +197,7 @@ export default function(options: ModuleOptions): Rule {
     const modulePath = `${
       !options.flat ? moduleDasherized + "/" : ""
     }${moduleDasherized}.module.ts`;
-    const containerName = `${moduleDasherized}/page`;
+    // const containerName = `${moduleDasherized}/page`;
 
     return chain([
       !isLazyLoadedModuleGen ? addDeclarationToNgModule(options) : noop(),
@@ -212,8 +212,8 @@ export default function(options: ModuleOptions): Rule {
       schematic("container", {
         ...options,
         module: modulePath,
-        parent: options.name,
-        name: containerName
+        parent: options.name
+        // name: containerName
       }),
       schematic("actions", {
         ...options,
