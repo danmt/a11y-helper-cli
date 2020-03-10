@@ -23,11 +23,7 @@ import * as ts from "typescript";
 import {
   addRouteDeclarationToModule,
   addImportToModule,
-  addToArray,
-  getReducerComponentLoadedCase,
-  getReducerToggleComponentCase,
-  insertImport,
-  addNewTypeToReducer
+  addToArray
 } from "../utility/ast-utils";
 import { InsertChange } from "../utility/change";
 import {
@@ -200,136 +196,6 @@ function buildRoute(options: ModuleOptions, modulePath: string) {
   return `{ path: '${options.route}', data: ${data}, loadChildren: ${loadChildren} }`;
 }
 
-function addComponentLoadedToReducer(path: string, classified: string): Rule {
-  return (host: Tree) => {
-    const text = host.read(path);
-    if (!text) {
-      throw new Error(`Couldn't find the module nor its routing module.`);
-    }
-    const sourceText = text.toString();
-    const sourceFile = ts.createSourceFile(
-      path,
-      sourceText,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    const componentLoadedCase = getReducerComponentLoadedCase(
-      sourceFile,
-      "componentsReducer"
-    );
-    if (!componentLoadedCase || !ts.isCallExpression(componentLoadedCase)) {
-      console.log("Wrong case");
-      return;
-    }
-    const lastArgument =
-      componentLoadedCase.arguments[componentLoadedCase.arguments.length - 1];
-    const insertPos = lastArgument.pos;
-    let moduleActionTypes = `${classified}ApiActions.componentsLoaded,`;
-    const changes = new InsertChange(path, insertPos, moduleActionTypes);
-    const recorder = host.beginUpdate(path);
-    recorder.insertLeft(changes.pos, changes.toAdd);
-    host.commitUpdate(recorder);
-    return host;
-  };
-}
-
-function addToggleComponentToReducer(path: string, classified: string): Rule {
-  return (host: Tree) => {
-    const text = host.read(path);
-    if (!text) {
-      throw new Error(`Couldn't find the module nor its routing module.`);
-    }
-    const sourceText = text.toString();
-    const sourceFile = ts.createSourceFile(
-      path,
-      sourceText,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    const toggleComponentCase = getReducerToggleComponentCase(
-      sourceFile,
-      "componentsReducer"
-    );
-    if (!toggleComponentCase || !ts.isCallExpression(toggleComponentCase)) {
-      console.log("Wrong case");
-      return;
-    }
-    const lastArgument =
-      toggleComponentCase.arguments[toggleComponentCase.arguments.length - 1];
-    const insertPos = lastArgument.pos;
-    let moduleActionTypes = `${classified}PageActions.toggleComponent,`;
-    const changes = new InsertChange(path, insertPos, moduleActionTypes);
-    const recorder = host.beginUpdate(path);
-    recorder.insertLeft(changes.pos, changes.toAdd);
-    host.commitUpdate(recorder);
-    return host;
-  };
-}
-
-function buildActionsToImport(name: string) {
-  return `
-    ${name}ApiActions,
-    ${name}PageActions,
-    ${name}Actions
-  `;
-}
-
-function addActionsImports(
-  path: string,
-  classified: string,
-  dasherized: string
-): Rule {
-  return (host: Tree) => {
-    const text = host.read(path);
-    if (!text) {
-      throw new Error(`Couldn't find the module nor its routing module.`);
-    }
-    const sourceText = text.toString();
-    const sourceFile = ts.createSourceFile(
-      path,
-      sourceText,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    const changes = insertImport(
-      sourceFile,
-      path,
-      buildActionsToImport(classified),
-      `src/app/${dasherized}/actions`
-    ) as InsertChange;
-    const recorder = host.beginUpdate(path);
-    recorder.insertLeft(changes.pos, changes.toAdd);
-    host.commitUpdate(recorder);
-    return host;
-  };
-}
-
-function addActionsTypesToDeclaration(path: string, classified: string): Rule {
-  return (host: Tree) => {
-    const text = host.read(path);
-    if (!text) {
-      throw new Error(`Couldn't find the module nor its routing module.`);
-    }
-    const sourceText = text.toString();
-    const sourceFile = ts.createSourceFile(
-      path,
-      sourceText,
-      ts.ScriptTarget.Latest,
-      true
-    );
-    const changes = addNewTypeToReducer(
-      sourceFile,
-      path,
-      "reducer",
-      `${classified}Actions`
-    ) as InsertChange;
-    const recorder = host.beginUpdate(path);
-    recorder.insertLeft(changes.pos, changes.toAdd);
-    host.commitUpdate(recorder);
-    return host;
-  };
-}
-
 export default function(options: ModuleOptions): Rule {
   return async (host: Tree) => {
     if (options.path === undefined) {
@@ -381,23 +247,9 @@ export default function(options: ModuleOptions): Rule {
         moduleClassified,
         moduleDasherized
       ),
-      addComponentLoadedToReducer(
-        "src/app/core/reducers/components.reducer.ts",
-        moduleClassified
-      ),
-      addToggleComponentToReducer(
-        "src/app/core/reducers/components.reducer.ts",
-        moduleClassified
-      ),
-      addActionsImports(
-        "src/app/core/reducers/components.reducer.ts",
-        moduleClassified,
-        moduleDasherized
-      ),
-      addActionsTypesToDeclaration(
-        "src/app/core/reducers/components.reducer.ts",
-        moduleClassified
-      ),
+      schematic("include-in-reducer", {
+        ...options
+      }),
       mergeWith(templateSource),
       schematic("container", {
         ...options,

@@ -1004,6 +1004,40 @@ export function getReducerToggleComponentCase(
   return reducerDeclaration.arguments[2];
 }
 
+export function addActionToReducerComponentLoadedCase(
+  source: ts.SourceFile,
+  path: string,
+  name: string,
+  content: string
+) {
+  const componentLoadedCase = getReducerComponentLoadedCase(source, name);
+  if (!componentLoadedCase || !ts.isCallExpression(componentLoadedCase)) {
+    console.log("Wrong case");
+    return;
+  }
+  const lastArgument =
+    componentLoadedCase.arguments[componentLoadedCase.arguments.length - 1];
+  const insertPos = lastArgument.pos;
+  return new InsertChange(path, insertPos, content);
+}
+
+export function addActionToReducerToggleComponentCase(
+  source: ts.SourceFile,
+  path: string,
+  name: string,
+  content: string
+) {
+  const componentLoadedCase = getReducerToggleComponentCase(source, name);
+  if (!componentLoadedCase || !ts.isCallExpression(componentLoadedCase)) {
+    console.log("Wrong case");
+    return;
+  }
+  const lastArgument =
+    componentLoadedCase.arguments[componentLoadedCase.arguments.length - 1];
+  const insertPos = lastArgument.pos;
+  return new InsertChange(path, insertPos, content);
+}
+
 export function addNewTypeToReducer(
   source: ts.SourceFile,
   path: string,
@@ -1017,13 +1051,24 @@ export function addNewTypeToReducer(
     return;
   }
 
-  const unionType = declaration.parameters[1].type;
+  const typeDefinition = declaration.parameters[1].type;
 
-  if (!unionType || !ts.isUnionTypeNode(unionType)) {
-    console.log("Type error");
+  if (!typeDefinition) {
+    console.log("Wrong Type Definition");
     return;
   }
-  const insertPos = unionType.types[unionType.types.length - 1].end;
-  const content = `|${newType}`;
-  return new InsertChange(path, insertPos, content);
+
+  if (ts.isTypeReferenceNode(typeDefinition)) {
+    const insertPos = typeDefinition.end;
+    const content = `|${newType}`;
+    return new InsertChange(path, insertPos, content);
+  }
+
+  if (ts.isUnionTypeNode(typeDefinition)) {
+    const insertPos = typeDefinition.types[typeDefinition.types.length - 1].end;
+    const content = `|${newType}`;
+    return new InsertChange(path, insertPos, content);
+  }
+
+  return new NoopChange();
 }

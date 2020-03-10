@@ -32,6 +32,11 @@
       "description": "Create an Angular component.",
       "schema": "./component/schema.json"
     },
+    "include-in-reducer": {
+      "factory": "./include-in-reducer",
+      "description": "Include new module in global reducer",
+      "schema": "./include-in-reducer/schema.json"
+    },
     "module": {
       "aliases": ["m"],
       "factory": "./module",
