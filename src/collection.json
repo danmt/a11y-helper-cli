@@ -37,6 +37,11 @@
       "description": "Include new module in global reducer",
       "schema": "./include-in-reducer/schema.json"
     },
+    "include-route": {
+      "factory": "./include-route",
+      "description": "Include new module in app routing",
+      "schema": "./include-route/schema.json"
+    },
     "module": {
       "aliases": ["m"],
       "factory": "./module",

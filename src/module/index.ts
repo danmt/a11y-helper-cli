@@ -22,8 +22,7 @@ import {
 import * as ts from "typescript";
 import {
   addRouteDeclarationToModule,
-  addImportToModule,
-  addToArray
+  addImportToModule
 } from "../utility/ast-utils";
 import { InsertChange } from "../utility/change";
 import {
@@ -137,44 +136,6 @@ function addRouteDeclarationToNgModule(
   };
 }
 
-function addRouteToCoreRoutes(
-  path: string,
-  classified: string,
-  dasherized: string
-): Rule {
-  return (host: Tree) => {
-    const text = host.read(path);
-    if (!text) {
-      throw new Error(`Couldn't find the module nor its routing module.`);
-    }
-
-    const sourceText = text.toString();
-
-    const sourceFile = ts.createSourceFile(
-      path,
-      sourceText,
-      ts.ScriptTarget.Latest,
-      true
-    );
-
-    const changes = addToArray(
-      sourceFile,
-      path,
-      "ROUTES",
-      `{
-        title: '${classified}',
-        path: '/${dasherized}'
-      }`
-    ) as InsertChange;
-
-    const recorder = host.beginUpdate(path);
-    recorder.insertLeft(changes.pos, changes.toAdd);
-    host.commitUpdate(recorder);
-
-    return host;
-  };
-}
-
 function getRoutingModulePath(
   host: Tree,
   modulePath: string
@@ -233,7 +194,6 @@ export default function(options: ModuleOptions): Rule {
       move(parsedPath.path)
     ]);
     const moduleDasherized = strings.dasherize(options.name);
-    const moduleClassified = strings.classify(options.name);
     const modulePath = `${
       !options.flat ? moduleDasherized + "/" : ""
     }${moduleDasherized}.module.ts`;
@@ -242,11 +202,9 @@ export default function(options: ModuleOptions): Rule {
     return chain([
       !isLazyLoadedModuleGen ? addDeclarationToNgModule(options) : noop(),
       addRouteDeclarationToNgModule(options, routingModulePath),
-      addRouteToCoreRoutes(
-        "src/app/core/consts/routes.const.ts",
-        moduleClassified,
-        moduleDasherized
-      ),
+      schematic("include-route", {
+        ...options
+      }),
       schematic("include-in-reducer", {
         ...options
       }),
