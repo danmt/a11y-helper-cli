@@ -25,8 +25,7 @@ import * as ts from "typescript";
 import {
   addDeclarationToModule,
   addEntryComponentToModule,
-  addExportToModule,
-  addToArray
+  addExportToModule
 } from "../utility/ast-utils";
 import { InsertChange } from "../utility/change";
 import {
@@ -133,37 +132,6 @@ function addDeclarationToNgModule(options: ComponentOptions): Rule {
   };
 }
 
-function addComponentToModule(path: string, dasherized: string): Rule {
-  return (host: Tree) => {
-    const text = host.read(path);
-    if (!text) {
-      throw new Error(`Couldn't find the module nor its routing module.`);
-    }
-
-    const sourceText = text.toString();
-
-    const sourceFile = ts.createSourceFile(
-      path,
-      sourceText,
-      ts.ScriptTarget.Latest,
-      true
-    );
-
-    const changes = addToArray(
-      sourceFile,
-      path,
-      "COMPONENTS",
-      `'${dasherized}'`
-    ) as InsertChange;
-
-    const recorder = host.beginUpdate(path);
-    recorder.insertLeft(changes.pos, changes.toAdd);
-    host.commitUpdate(recorder);
-
-    return host;
-  };
-}
-
 function buildSelector(options: ComponentOptions, projectPrefix: string) {
   let selector = strings.dasherize(options.name);
   if (options.prefix) {
@@ -229,10 +197,6 @@ export default function(options: ComponentOptions): Rule {
 
     return chain([
       addDeclarationToNgModule(options),
-      addComponentToModule(
-        `src/app/${parentDasherized}/consts/components.const.ts`,
-        strings.dasherize(options.name)
-      ),
       mergeWith(templateSource),
       options.lintFix ? applyLintFix(options.path) : noop()
     ]);
