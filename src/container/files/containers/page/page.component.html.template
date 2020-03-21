@@ -1,11 +1,11 @@
 <app-page-section [title]="module">
-  <app-code
+  <app-component-section
     *ngFor="let component of components$ | async"
     [module]="component.module"
     [component]="component.name"
-    [code]="component.code"
+    [files]="component.files"
     [isOpen]="component.isOpen"
-    (codePanelToggled)="toggleComponent(component.id, component.isOpen)"
+    (filesToggled)="toggleComponent(component.id, component.isOpen)"
   >
-  </app-code>
+  </app-component-section>
 </app-page-section>

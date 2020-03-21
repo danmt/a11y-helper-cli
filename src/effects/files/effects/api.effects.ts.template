@@ -10,7 +10,7 @@ import {
   <%= classify(name) %>ApiActions,
   <%= classify(name) %>Actions
 } from '../actions';
-import { COMPONENTS, MODULE } from '../consts';
+import { MODULE } from '../consts';
 
 @Injectable()
 export class <%= classify(name) %>ApiEffects {
@@ -20,7 +20,7 @@ export class <%= classify(name) %>ApiEffects {
       isModuleLoaded<typeof <%= classify(name) %>PageActions.enter>(this.store, MODULE),
       exhaustMap(() =>
         this.fileReader
-          .getComponents(MODULE, COMPONENTS)
+          .getComponents(MODULE)
           .pipe(
             map(components =>
               <%= classify(name) %>ApiActions.componentsLoaded({ module: MODULE, components })

@@ -1,2 +1,1 @@
-export { COMPONENTS } from './components.const';
 export { MODULE } from './module.const';
